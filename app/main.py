@@ -1,7 +1,7 @@
 import os, random, sys, io
 from werkzeug.utils import secure_filename
 import json, requests, flask
-from flask import request, render_template, flash, redirect
+from flask import request, render_template, flash, redirect,  url_for
 import google.oauth2.credentials, google_auth_oauthlib.flow, googleapiclient.discovery
 from apiclient.http import MediaFileUpload, MediaIoBaseDownload
 from apiclient import http
@@ -345,18 +345,21 @@ def editgroup(group_id, username):
         group_entries = GroupEntry.query.filter_by(group_id=group_id).all()
         for entry in group_entries:
             user = User.query.filter_by(id=entry.user_id).first()
-            names.append(user.name)
-        return render_template('editgroup.html', username=username, entries=group_entries, names=names,index=len(group_entries))
+            names.append(user.username)
+        index = len(group_entries)
+        return render_template('editgroup.html', username=username, entries=group_entries, names=names,index=index)
     except Exception as e:
         print(e)
         return render_template('main.html',username=username)
 
 @app.route('/remove/<username>/<group_id>/<user_id>')
 def remove(username, group_id, user_id):
-    group_entry = GroupEntry.query.filter_by(group_id=group_id, user_id=user_id)
+    print("Deleting")
+    group_entry = GroupEntry.query.filter_by(group_id=group_id, user_id=user_id).first()
+    print(group_entry)
     db.session.delete(group_entry)
     db.session.commit()
-    return redirect('editgroup/'+group_id + '/' +username)
+    return redirect(url_for('editgroup',group_id=group_id,username=username))
 @app.route('/groups/<username>', methods=['POST', 'GET'])
 def viewgroups(username):
     try:
