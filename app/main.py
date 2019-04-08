@@ -324,6 +324,39 @@ def register():
 def main(username):
     return render_template('main.html', username=username)
 
+@app.route('/editgroups/<username>')
+def editgroups(username):
+    try:
+        user = User.query.filter_by(username=username).first()
+        return_groups = []
+        groups = (GroupEntry.query.filter_by(user_id=user.id)).all()
+        for group in groups:
+            db_group = Group.query.filter_by(id=group.group_id).first()
+            print(db_group.name)
+            return_groups.append(db_group)
+        return render_template('editgroups.html', groups=return_groups, username=username, index=len(return_groups))
+    except Exception as e:
+        print(e)
+        return render_template('main.html', username=username)
+@app.route('/editgroup/<group_id>/<username>')
+def editgroup(group_id, username):
+    try:
+        names = []
+        group_entries = GroupEntry.query.filter_by(group_id=group_id).all()
+        for entry in group_entries:
+            user = User.query.filter_by(id=entry.user_id).first()
+            names.append(user.name)
+        return render_template('editgroup.html', username=username, entries=group_entries, names=names,index=len(group_entries))
+    except Exception as e:
+        print(e)
+        return render_template('main.html',username=username)
+
+@app.route('/remove/<username>/<group_id>/<user_id>')
+def remove(username, group_id, user_id):
+    group_entry = GroupEntry.query.filter_by(group_id=group_id, user_id=user_id)
+    db.session.delete(group_entry)
+    db.session.commit()
+    return redirect('editgroup/'+group_id + '/' +username)
 @app.route('/groups/<username>', methods=['POST', 'GET'])
 def viewgroups(username):
     try:

@@ -1,0 +1,36 @@
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Edit Groups</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-2">
+
+        </div>
+        <div class="col-sm-8">
+          <table class="w3-table w3-striped">
+            <th>Group Name</th>
+            {% for i in range(index) %}
+              <tr> <td><a href='/editgroup/{% print(groups[i].id,"/",username) %}'>{%print groups[i].name%}</a> </td> </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-sm-2">
+
+        </div>
+        <div class="col-sm-6">
+          <a href="/add_group/{%print(username)%}">Add group</a>
+        </div>
+      </div>
+    </div>
+
+
+  </body>
+</html>
