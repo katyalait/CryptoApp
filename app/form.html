@@ -1,0 +1,29 @@
+<title>Upload File</title>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<ul>
+                    {% for message in messages %}
+ 	<li>{{ message[1] }}</li>
+{% endfor %}</ul>
+{% endif %}
+{% endwith %}
+<!-- <form action="input post">
+            {{ form.csrf }}
+<div class="input type='text'">
+                {{ form.name.label }} {{ form.name }}</div>
+<div class = "input file">
+    {{ form.file.label }} {{ form.file }} </div>
+
+<div class = "input text">
+  {{ form.description.label }} {{ form.description }} </div>
+<div class="input submit">
+                <input type="submit" value="Submit"></div>
+</form> -->
+<form action="" method="post">
+    {{ form.name.label }}: {{ form.namel(placeholder='image name') }}
+    <br>
+    {{ form.file.label }}: {{ form.file }}
+    <br>
+    {{ form.description.label }}: {{form.description}}
+</form>

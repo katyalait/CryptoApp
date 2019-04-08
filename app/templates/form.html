@@ -1,0 +1,54 @@
+<head>
+  <title>Upload File</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-4">
+          <p><a href="/main/{% print(username) %}">Back to Main Menu</a></p>
+      </div>
+      <div class="col-sm-4">
+
+        <h1>Upload File</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-1">
+
+      </div>
+      <div class="col-sm-3">
+        <p> {{ message }}</p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-4">
+
+      </div>
+      <div class="col-sm-7">
+
+        <form action="" method="POST" id="upload" enctype="multipart/form-data">
+          <label for="name">Name: </label><br>
+          <input type="text" name="name" label="Name">
+            <br>
+            <br>
+            <label for="name">File: </label><br>
+            <input type="file" name="file" label="File">
+            <br>
+            <br>
+            <label for="group">Group: </label><br>
+            <select form="upload" name="group">
+              {%  for group in groups %}
+              <option value="{%print(group.name)%}">{%print(group.name)%}</option>
+              {% endfor %}
+            </select>
+            <br>
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+      </div>
+    </div>
+
+  </div>
+</body>

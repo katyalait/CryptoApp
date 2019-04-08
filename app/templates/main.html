@@ -1,0 +1,49 @@
+<head>
+  <title>Main</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+</head>
+<body>
+<div class="container">
+  <div class="row">
+    <h1>Main Menu</h1>
+    </div>
+<div class="row">
+    <div class="col-sm-1">
+      <p>  </p>
+    </div>
+  <div class="col-sm-9">
+    <p style="color:{% print(color) %}">{{ message }}</p>
+    <p><a href="/login">Login here</a></p>
+    <table  class="w3-table w3-striped">
+            <th>Link</th>
+            <th>Description</th>
+            <tr><td><a href="/authorize">Authorize Google API</a></td>
+            <td>Submit an API request. Go through the authorization flow if there are no stored
+                credentials for the user.</td></tr>
+            <tr><td><a href="/revoke/{% print(username) %}">Revoke current credentials</a></td>
+            <td>Revoke the access token associated with the current user
+                session. After revoking credentials, if you go to the test
+                page, you should see an <code>invalid_grant</code> error.
+            </td></tr>
+            <tr><td><a href="/clear/{% print(username) %}">Clear Flask session credentials</a></td>
+            <td>Clear the access token currently stored in the user session.
+                After clearing the token, if you <a href="/test">test the API request</a> again, you should go back to the auth flow.
+             </td></tr>
+             <tr><td><a href="/upload/{% print(username) %}">Upload File</a></td>
+             <td> Upload a file to the app data.
+              </td></tr>
+            <tr><td><a href='/files/{% print(username) %}'>My Files</a></td>
+              <td> View files that were uploaded and encrypted by the user.
+               </td></tr>
+            <tr><td><a href="/groups/{% print(username) %}">My Groups</a></td>
+                 <td> View groups for user.
+            </td></tr>
+
+    </table>
+  </div>
+</div>
+</div>
+
+
+</body>
