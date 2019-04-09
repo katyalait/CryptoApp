@@ -12,6 +12,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 signed_in_user = "guest"
 
@@ -21,19 +22,19 @@ UPLOAD_FOLDER = 'uploads/'
 DOWNLOAD_FOLDER = 'downloads/'
 TEMPLATES = 'templates/'
 
-ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'docx', 'csv', 'ppt'])
-CLIENT_SECRETS_FILE = "client_secret_NNN.json"
-
-SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.file']
-API_SERVICE_NAME = 'drive'
-API_VERSION = 'v3'
-
 app = flask.Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['ENCRYPTED_FOLDER'] = ENCRYPTED_FOLDER
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
 app.config['TEMPLATES'] = TEMPLATES
 app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////" + os.path.join(basedir, 'app.db')
+
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'pdf', 'docx', 'csv', 'ppt'])
+CLIENT_SECRETS_FILE = "client_secret_NNN.json"
+
+SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/drive.appdata', 'https://www.googleapis.com/auth/drive.file']
+API_SERVICE_NAME = 'drive'
+API_VERSION = 'v3'
 app.secret_key = '\xfd{H\xe5<\x95\xf9\xe3\x96.5\xd1\x01O<!\xd5\xa2\xa0\x9fR"\xa1\xa8'
 db = SQLAlchemy(app)
 
@@ -111,7 +112,6 @@ def get_file(id, username):
     drive = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
     try:
         file = drive.files().get(fileId=id).execute()
-
         name = file['name']
         type = file['mimeType']
         request = drive.files().get_media(fileId=id)
@@ -124,22 +124,28 @@ def get_file(id, username):
         print("Downloaded file... decrypting")
         user_id = User.query.filter_by(username=username).first().id
         group_entries = GroupEntry.query.filter_by(user_id=user_id).all()
-
-        keys = []
+        outfile=False
         for entry in group_entries:
-            print("Found key for user...")
-            keys.append(entry.key)
-        unlocked = False
-        outfile = ""
-        for key in keys:
-            outfile = decrypt(key, path, name)
+            print("group_id:",entry.group_id)
+            group_id = Group.query.filter_by(id=entry.group_id).first().id
+            key=entry.key
+            outfile = decrypt(key, path, name, group_id)
             if not outfile == False:
                 break
-        return render_template('main.html', username=username)
+        message = ""
+        color = ""
+        print(outfile)
+        if outfile==False:
+            message="The file could not be decrypted as you do not have access to the group that encrypted it."
+            color = "red"
+        else:
+            message = "The file has been decrypted and is located in your downloads folder."
+            color = "green"
+        return render_template('main.html', username=username, message=message, color=color)
 
     except Exception as error:
         print('An error occurred: ',error)
-        return "File download failed"
+        return render_template('main.html', username=username, message="Error decrypting file", color="red")
 
 @app.route('/authorize')
 def authorize():
@@ -264,8 +270,8 @@ def upload_file(username):
             group_chosen =  form['group']
             group = Group.query.filter_by(name=group_chosen).first().id
             key = GroupEntry.query.filter_by(group_id=group).first().key
-            output = encrypt(filename, key, 'aes')
-            file_metadata = {'name': "encrypted_"+filename + "." + extension}
+            output = encrypt(filename, key, group)
+            file_metadata = {'name': "encrypted_"+filename}
             credentials = google.oauth2.credentials.Credentials(**flask.session['credentials'])
             drive = googleapiclient.discovery.build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
             media = MediaFileUpload(output)
@@ -426,8 +432,8 @@ def add_group(username):
             groups = (GroupEntry.query.filter_by(user_id=cur_user.id)).all()
             for group in groups:
                 db_group = Group.query.filter_by(id=group.group_id).first()
-                return_groups.append(db_group.name)
-            return render_template('view_groups.html', groups=return_groups,username=username)
+                return_groups.append(db_group)
+            return render_template('editgroups.html', groups=return_groups,username=username, index=len(return_groups))
         else:
             return_groups = []
             id = (User.query.filter_by(username=username).first()).id
@@ -447,38 +453,33 @@ def credentials_to_dict(credentials):
           'client_secret': credentials.client_secret,
           'scopes': credentials.scopes}
 
-def encrypt(filename, key, algorithm):
+def encrypt(filename, key, group_id):
     blocksize = 64*1024
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     output = os.path.join(app.config['ENCRYPTED_FOLDER'],"encrypted_"+filename)
     size = str(os.path.getsize(path)).zfill(16)
+    group_id_str = str(group_id).zfill(16)
     iv = ''
     for i in range(16):
         iv +=  chr(random.randint(0,99))
-    if algorithm=="aes":
-        print(iv)
-        encryptor = AES.new(key, AES.MODE_CBC, iv)
-        infile = open(path, "rb")
-        out = open(output, 'wb+')
-        out.write(size.encode())
-        out.write(iv.encode())
-        print("IV:", iv)
-        print("Size: ", size)
-        while True:
-            block = infile.read(blocksize)
-            if (len(block)==0):
-                break
-            elif len(block) % 16 !=0:
-                block += (' ' * (16-(len(block) % 16))).encode()
-            out.write(encryptor.encrypt(block))
-        out.close()
-
-    elif algorithm=="sha256":
-        pass
-
+    print(iv)
+    encryptor = AES.new(key, AES.MODE_CBC, iv)
+    infile = open(path, "rb")
+    out = open(output, 'wb+')
+    out.write(size.encode())
+    out.write(iv.encode())
+    out.write(group_id_str.encode())
+    while True:
+        block = infile.read(blocksize)
+        if (len(block)==0):
+            break
+        elif len(block) % 16 !=0:
+            block += (' ' * (16-(len(block) % 16))).encode()
+        out.write(encryptor.encrypt(block))
+    out.close()
     return output
 
-def decrypt(key, filename, out_filename):
+def decrypt(key, filename, out_filename, group_id):
     try:
         blocksize = 64*1024
         out_filename = os.path.join(app.config['DOWNLOAD_FOLDER'], out_filename[len('encrypted_'):])
@@ -487,7 +488,11 @@ def decrypt(key, filename, out_filename):
             filesize = infile.read(16).decode()
             print(filesize)
             iv = str(infile.read(16).decode())
+            group_file_id = int(infile.read(16).decode())
+            if not group_id==group_file_id:
+                return False
             print("IV found:", iv)
+            print("Size: ",filesize)
             decryptor = AES.new(key, AES.MODE_CBC, iv)
             with open(out_filename, 'wb+') as outfile:
                 while True:

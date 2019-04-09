@@ -9,6 +9,9 @@
   <body>
     <div class="container">
       <div class="row">
+        <p><a href="/main/{% print(username) %}">Back to Main Menu</a></p>
+      </div>
+      <div class="row">
         <div class="col-sm-2">
 
         </div>
@@ -27,6 +30,8 @@
         </div>
         <div class="col-sm-6">
           <a href="/add_group/{%print(username)%}">Add group</a>
+          <br>
+          <a href="/groups/{%print(username)%}">Add users to groups</a>
         </div>
       </div>
     </div>
